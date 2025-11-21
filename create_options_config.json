@@ -1,0 +1,7 @@
+{
+    "index_tokens": ["SPX", "DJI"],
+    "strike_threshold_percent": 1,
+    "number_of_queues": 6,
+    "config_file_path": "./subscriptions.json",
+    "dte_list": [0]
+}

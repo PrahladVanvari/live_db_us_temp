@@ -1,0 +1,8 @@
+{
+    "index_repr": {
+        "I:SPX": "SPXSPOT",
+        "I:DJI": "DJISPOT",
+        "I:NDX": "NDXSPOT",
+        "I:VIX": "VIXSPOT"
+    }
+}
