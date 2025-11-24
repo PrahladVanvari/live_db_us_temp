@@ -206,10 +206,11 @@ def update_json_file_with_tickers(json_path, tickers, num_queues):
 #         print("Typo in Login Choice. Exiting.")
 #         return
 
+if __name__ == "__main__":
+    update_json_file_with_tickers(
+        json_path=config_file_path,
+        tickers=all_option_tickers,
+        num_queues=number_of_queues,
+    )
+    # create_conids_json()
 
-update_json_file_with_tickers(
-    json_path=config_file_path,
-    tickers=all_option_tickers,
-    num_queues=number_of_queues,
-)
-# create_conids_json()
