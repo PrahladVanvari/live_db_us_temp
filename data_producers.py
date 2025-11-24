@@ -2,8 +2,7 @@ from polygon import WebSocketClient
 from polygon.websocket.models import WebSocketMessage, Feed, Market
 from polygon.websocket.models import IndexValue, EquityTrade, EquityQuote
 from typing import List
-# import multiprocessing as mp # for mp.Queue
-import queue # for queue.Queue()
+import multiprocessing as mp # for mp.Queue
 import traceback
 from datetime import datetime, timedelta
 from config import POLYGON_API_KEY, MARKET_CLOSE_TIME
@@ -11,8 +10,7 @@ from config import MASTER_QUEUE_DICT, REVERSED_MASTER_QUEUE_DICT, INDEX_QUEUE_DI
 from loggers import polygon_logger, options_logger, index_logger
 import time
 
-# MP_QUEUES = {queue_name: mp.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
-MP_QUEUES = {queue_name: queue.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
+MP_QUEUES = {queue_name: mp.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
 # MAIN_QUEUE = mp.Queue()
 
 def _create_polygon_websocket_client(api_key: str, feed: Feed, market: Market) -> WebSocketClient:
