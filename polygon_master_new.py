@@ -17,7 +17,8 @@ from config import get_our_index_ticker, get_our_options_ticker
 from loggers import polygon_logger, queue_logger
 from data_consumers import consume_index_value, consume_options_trade_msg, consume_options_quote_msg
 from data_producers import create_index_websocket_client, create_options_websocket_client, indices_data_producer, options_data_producer
-from data_producers import MAIN_QUEUE # MP_QUEUE
+# from data_producers import MAIN_QUEUE # MP_QUEUE
+from data_producers import MP_QUEUES # MP_QUEUE
 
 # KEYDB DataBase Connection
 redis = direct_redis.DirectRedis(host='localhost', port=6379, db=0)
@@ -69,7 +70,8 @@ if __name__ == "__main__":
     for queue_name, queue_tmp in OPTIONS_QUEUE_DICT.items():
     # if True:
         # queue_name = "main"
-        queue_1 = MAIN_QUEUE
+        # queue_1 = MAIN_QUEUE
+        queue_1 = MP_QUEUES[queue_name]
         # print(f'Inside for : {queues[prefix]}')
         polygon_logger.info(f"Starting mp.Queue for {queue_name}")
         process = mp.Process(target=process_queue_data, args=(queue_name, queue_1))

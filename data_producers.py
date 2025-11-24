@@ -2,7 +2,8 @@ from polygon import WebSocketClient
 from polygon.websocket.models import WebSocketMessage, Feed, Market
 from polygon.websocket.models import IndexValue, EquityTrade, EquityQuote
 from typing import List
-import multiprocessing as mp
+# import multiprocessing as mp # for mp.Queue
+import queue # for queue.Queue()
 import traceback
 from datetime import datetime, timedelta
 from config import POLYGON_API_KEY, MARKET_CLOSE_TIME
@@ -11,7 +12,8 @@ from loggers import polygon_logger, options_logger, index_logger
 import time
 
 # MP_QUEUES = {queue_name: mp.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
-MAIN_QUEUE = mp.Queue()
+MP_QUEUES = {queue_name: queue.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
+# MAIN_QUEUE = mp.Queue()
 
 def _create_polygon_websocket_client(api_key: str, feed: Feed, market: Market) -> WebSocketClient:
     return WebSocketClient(api_key=api_key, feed=feed, market=market)
@@ -56,8 +58,8 @@ def indices_data_producer(polygon: WebSocketClient):
             if index_value.ticker in REVERSED_INDEX_QUEUE_DICT.keys() :
                 queue_name = REVERSED_INDEX_QUEUE_DICT[index_value.ticker]
                 index_logger.debug(f"Adding data to Queue({queue_name}): {index_value}")
-                # MP_QUEUES[queue_name].put(index_value)
-                MAIN_QUEUE.put(index_value)
+                MP_QUEUES[queue_name].put(index_value)
+                # MAIN_QUEUE.put(index_value)
             else:
                 index_logger.warning(f"Tick for Unknown Index Received: {index_value.ticker}")
 
@@ -100,8 +102,8 @@ def options_data_producer(polygon: WebSocketClient):
             if options_trade_data.symbol in REVERSED_OPTIONS_QUEUE_DICT.keys() :
                 queue_name = REVERSED_OPTIONS_QUEUE_DICT[options_trade_data.symbol]
                 options_logger.debug(f"Adding data to Queue({queue_name}): {options_trade_data}")
-                # MP_QUEUES[queue_name].put(options_trade_data)
-                MAIN_QUEUE.put(options_trade_data)
+                MP_QUEUES[queue_name].put(options_trade_data)
+                # MAIN_QUEUE.put(options_trade_data)
             else:
                 options_logger.warning(f"Tick for Unknown Index Received: {options_trade_data.symbol}")
 
@@ -114,8 +116,8 @@ def options_data_producer(polygon: WebSocketClient):
             if options_quote_data.symbol in REVERSED_OPTIONS_QUEUE_DICT.keys() :
                 queue_name = REVERSED_OPTIONS_QUEUE_DICT[options_quote_data.symbol]
                 options_logger.debug(f"Adding data to Queue({queue_name}): {options_quote_data}")
-                # MP_QUEUES[queue_name].put(options_quote_data)
-                MAIN_QUEUE.put(options_quote_data)
+                MP_QUEUES[queue_name].put(options_quote_data)
+                # MAIN_QUEUE.put(options_quote_data)
             else:
                 options_logger.warning(f"Tick for Unknown Index Received: {options_quote_data.symbol}")
 
