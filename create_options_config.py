@@ -193,6 +193,51 @@ def update_json_file_with_tickers(json_path, tickers, num_queues):
 
     print(f"Updated {json_path} successfully.")
 
+# import re
+# OCC_REGEX = re.compile(r"O:([A-Z]+)(\d{6})([CP])(\d{8})")
+
+
+# def extract_strike(ticker: str) -> float:
+#     """Extract strike from OCC ticker (last 8 digits / 1000)."""
+#     m = OCC_REGEX.match(ticker)
+#     if not m:
+#         return 0.0
+#     return int(m.group(4)) / 1000.0
+
+
+# def update_json_file_with_tickers(json_path, tickers, num_queues, atm_strike):
+def update_json_file_with_tickers(json_path, tickers, num_queues):
+    # Load the existing JSON file
+    with open(json_path, 'r') as file:
+        data = json.load(file)
+
+    # -------------------------
+    # 1. Sort by ATM proximity
+    # -------------------------
+    # tickers_sorted = sorted(tickers, key=lambda t: abs(extract_strike(t) - atm_strike))
+    tickers_sorted = sorted(tickers)
+
+    # -------------------------
+    # 2. Round-robin distribute
+    # -------------------------
+    queues = {str(i + 1): [] for i in range(num_queues)}
+    idx = 0
+
+    for t in tickers_sorted:
+        key = str((idx % num_queues) + 1)
+        queues[key].append(t)
+        idx += 1
+
+    # -------------------------
+    # 3. Update JSON structure
+    # -------------------------
+    data["options_queues"] = queues
+
+    with open(json_path, 'w') as file:
+        json.dump(data, file, indent=2)
+
+    print(f"Updated {json_path} successfully.")
+
 
 # def create_conids_json():
 #     choice = input("Confirm IBKR Login (Y/N): ")
@@ -206,10 +251,11 @@ def update_json_file_with_tickers(json_path, tickers, num_queues):
 #         print("Typo in Login Choice. Exiting.")
 #         return
 
+if __name__ == "__main__":
+    update_json_file_with_tickers(
+        json_path=config_file_path,
+        tickers=all_option_tickers,
+        num_queues=number_of_queues,
+    )
+    # create_conids_json()
 
-update_json_file_with_tickers(
-    json_path=config_file_path,
-    tickers=all_option_tickers,
-    num_queues=number_of_queues,
-)
-# create_conids_json()
