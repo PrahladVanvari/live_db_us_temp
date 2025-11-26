@@ -39,7 +39,7 @@ def process_queue_data(queue_name: str):
     while running:
         try:
             market_data = queue1.get(timeout=0.01)
-            queue_logger.debug(f"Popped index data from queue: {market_data}")
+            # queue_logger.debug(f"Popped index data from queue: {market_data}")
             if isinstance(market_data, IndexValue):
                 last_minute = consume_index_value(market_data, last_minute, queue1.qsize(), queue_name)
             elif isinstance(market_data, EquityTrade):

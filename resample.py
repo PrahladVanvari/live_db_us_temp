@@ -16,9 +16,7 @@ def resample_tick(reference_timestamp, reference_price, symbol, qsize, redis: di
 
         # print(f'{queue_name} {qsize} {ltt_min_1} {symbol}:{reference_price}', sep='', end='\r', flush=True)
         # print(f'{queue_name} {qsize} {ltt_min_1} {symbol}:{reference_price}')
-        resampler_logger.debug(
-        f"Received tick for {symbol} at {timestamp}, Queue Size: {qsize}, Tick Value: {reference_price}"
-        )
+        # resampler_logger.debug(f"Received tick for {symbol} at {timestamp}, Queue Size: {qsize}, Tick Value: {reference_price}")
 
         # if ltt_min_1.time() < datetime.time(9, 15) and ltt_min_1.time() != datetime.time(9, 7):
         # resampler_logger.debug(f"Ignoring tick before market open: {ltt_min_1.time()}")
@@ -36,7 +34,7 @@ def resample_tick(reference_timestamp, reference_price, symbol, qsize, redis: di
             "v": 0,
             "oi": 0,
             }
-            resampler_logger.debug(f"Updated candle for {symbol} at {timestamp}: {candle}")
+            # resampler_logger.debug(f"Updated candle for {symbol} at {timestamp}: {candle}")
         else:
             candle = {
             "o": price_value,
@@ -46,30 +44,30 @@ def resample_tick(reference_timestamp, reference_price, symbol, qsize, redis: di
             "v": 0,
             "oi": 0,
             }
-            resampler_logger.debug(f"Created new candle for {symbol} at {timestamp}: {candle}")
+            # resampler_logger.debug(f"Created new candle for {symbol} at {timestamp}: {candle}")
 
         redis.hset(f'l.tick_{str(ltt_min_1)}', symbol, candle)
         redis.hset(f'l.{symbol}', str(ltt_min_1), candle)
 
-        resampler_logger.debug(f"Candle pushed for {symbol} at {timestamp}")
+        # resampler_logger.debug(f"Candle pushed for {symbol} at {timestamp}")
 
         # redis.set('CURRENT_EVENT', str(ltt_min_1))
         # PUBLISH EVENT
         if symbol == 'SPXSPOT':
-            print('IF CONDITION REACHED')
+            # print('IF CONDITION REACHED')
     
             if last_minute is None:
                 last_minute = ltt_min_1.minute
         
             elif ltt_min_1.minute == 0 and last_minute == 59:
                 redis.lpush('EVENTS', {'timestamp': ltt_min_2, 'bar_complete': True})
-                print(f'#####################################################BAR COMPLETE#################################################')
+                # print(f'#####################################################BAR COMPLETE#################################################')
                 # print(f'Bar Complete True : {ltt_min_2}')
                 last_minute = ltt_min_1.minute
     
             elif ltt_min_1.minute > last_minute:
                 redis.lpush('EVENTS', {'timestamp': ltt_min_2, 'bar_complete': True})
-                print(f'###############################################################BAR COMPLETE ################################################')
+                # print(f'###############################################################BAR COMPLETE ################################################')
                 last_minute = ltt_min_1.minute
         
             else:

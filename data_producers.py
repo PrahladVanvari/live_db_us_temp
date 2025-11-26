@@ -58,11 +58,11 @@ def indices_producer():
     def handle_index_update(index_value: IndexValue):
         # print(f"IndexValue[ ev:{index_value.event_type}, val: {index_value.value}, ticker: {index_value.ticker}, Timestamp: {index_value.timestamp}]")
         # polygon_logger.debug(f"IndexValue[ ev:{index_value.event_type}, val: {index_value.value}, ticker: {index_value.ticker}, Timestamp: {index_value.timestamp}]")
-        index_logger.debug(f"Received tick: {index_value}")
+        # index_logger.debug(f"Received tick: {index_value}")
         try :
             if index_value.ticker in REVERSED_INDEX_QUEUE_DICT.keys() :
                 queue_name = REVERSED_INDEX_QUEUE_DICT[index_value.ticker]
-                index_logger.debug(f"Adding data to Queue({queue_name}): {index_value}")
+                # index_logger.debug(f"Adding data to Queue({queue_name}): {index_value}")
                 MP_QUEUES[queue_name].put(index_value)
                 # MAIN_QUEUE.put(index_value)
             else:
@@ -105,11 +105,11 @@ def options_producer():
     polygon_logger.info("Options Data subscription complete")
 
     def handle_options_trade_update(options_trade_data: EquityTrade):
-        options_logger.debug(f"Received tick: {options_trade_data}")
+        # options_logger.debug(f"Received tick: {options_trade_data}")
         try :
             if options_trade_data.symbol in REVERSED_OPTIONS_QUEUE_DICT.keys() :
                 queue_name = REVERSED_OPTIONS_QUEUE_DICT[options_trade_data.symbol]
-                options_logger.debug(f"Adding data to Queue({queue_name}): {options_trade_data}")
+                # options_logger.debug(f"Adding data to Queue({queue_name}): {options_trade_data}")
                 MP_QUEUES[queue_name].put(options_trade_data)
                 # MAIN_QUEUE.put(options_trade_data)
             else:
@@ -119,11 +119,11 @@ def options_producer():
             traceback.print_exc()
             
     def handle_options_quote_update(options_quote_data: EquityQuote):
-        options_logger.debug(f"Received tick: {options_quote_data}")
+        # options_logger.debug(f"Received tick: {options_quote_data}")
         try :
             if options_quote_data.symbol in REVERSED_OPTIONS_QUEUE_DICT.keys() :
                 queue_name = REVERSED_OPTIONS_QUEUE_DICT[options_quote_data.symbol]
-                options_logger.debug(f"Adding data to Queue({queue_name}): {options_quote_data}")
+                # options_logger.debug(f"Adding data to Queue({queue_name}): {options_quote_data}")
                 MP_QUEUES[queue_name].put(options_quote_data)
                 # MAIN_QUEUE.put(options_quote_data)
             else:
