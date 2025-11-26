@@ -1,3 +1,4 @@
+import direct_redis
 from dotenv import load_dotenv
 import os
 import json
@@ -10,6 +11,8 @@ POLYGON_API_KEY = 'b14hrfXWHdEUrqnOxXpLJMNWAok8aE4t'  #os.getenv("POLYGON_API_KE
 
 if not POLYGON_API_KEY:
     raise ValueError("POLYGON_API_KEY not found in environment variables")
+
+redis = direct_redis.DirectRedis(host='localhost', port=6379, db=0)
 
 # Get today's date
 TODAY = datetime.today().date()

@@ -1,8 +1,9 @@
 from polygon import WebSocketClient
 from polygon.websocket.models import WebSocketMessage, Feed, Market
 from polygon.websocket.models import IndexValue, EquityTrade, EquityQuote
-from typing import List
-import multiprocessing as mp # for mp.Queue
+from typing import Dict, List
+# import multiprocessing as mp # for mp.Queue
+import queue
 import traceback
 from datetime import datetime, timedelta
 from config import POLYGON_API_KEY, MARKET_CLOSE_TIME
@@ -10,8 +11,11 @@ from config import MASTER_QUEUE_DICT, REVERSED_MASTER_QUEUE_DICT, INDEX_QUEUE_DI
 from loggers import polygon_logger, options_logger, index_logger
 import time
 
-MP_QUEUES = {queue_name: mp.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
+# MP_QUEUES: Dict[str, mp.Queue] = {queue_name: mp.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
+MP_QUEUES: Dict[str, queue.Queue] = {queue_name: queue.Queue() for queue_name, symbols in MASTER_QUEUE_DICT.items()}
 # MAIN_QUEUE = mp.Queue()
+options_message_count = 0
+start_time = time.time()
 
 def _create_polygon_websocket_client(api_key: str, feed: Feed, market: Market) -> WebSocketClient:
     return WebSocketClient(api_key=api_key, feed=feed, market=market)
@@ -39,6 +43,9 @@ def create_options_websocket_client():
     return polygon
 
 def indices_data_producer(polygon: WebSocketClient):
+    pass
+def indices_producer():
+    polygon = create_index_websocket_client()
 
     # Subscribe to receive feed for the specific indices
     for index_name in REVERSED_INDEX_QUEUE_DICT.keys():
@@ -75,6 +82,9 @@ def indices_data_producer(polygon: WebSocketClient):
     polygon.run(handle_msg)
 
 def options_data_producer(polygon: WebSocketClient):
+    pass
+def options_producer():
+    polygon = create_options_websocket_client()
     # # Polygon Websocket Connection
     # polygon = WebSocketClient(
     #     api_key=POLYGON_API_KEY,
@@ -125,9 +135,15 @@ def options_data_producer(polygon: WebSocketClient):
     last_msg_time = datetime.now()
 
     def handle_msg(msgs: List[WebSocketMessage]):
+        global options_message_count
         nonlocal last_msg_time
         last_msg_time = datetime.now()
         for msg in msgs:
+            options_message_count += 1
+            if options_message_count % 50000 == 0:
+                now_time = time.time()
+                rate_of_messages = options_message_count / (now_time - start_time)
+                print(f"[{now_time}] Rate[{rate_of_messages:.2f}/s] options_message_count: {options_message_count}")
             if isinstance(msg, EquityTrade):
                 handle_options_trade_update(msg)
             elif isinstance(msg, EquityQuote):

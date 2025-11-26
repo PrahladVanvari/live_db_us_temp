@@ -10,25 +10,30 @@ from datetime import datetime, time,timedelta
 import time
 import queue
 import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from config import POLYGON_API_KEY, MARKET_CLOSE_TIME
 from config import MASTER_QUEUE_DICT, REVERSED_MASTER_QUEUE_DICT, INDEX_QUEUE_DICT, REVERSED_INDEX_QUEUE_DICT, OPTIONS_QUEUE_DICT, REVERSED_OPTIONS_QUEUE_DICT
 from config import get_our_index_ticker, get_our_options_ticker
 from loggers import polygon_logger, queue_logger
 from data_consumers import consume_index_value, consume_options_trade_msg, consume_options_quote_msg
-from data_producers import create_index_websocket_client, create_options_websocket_client, indices_data_producer, options_data_producer
+from data_producers import create_index_websocket_client, create_options_websocket_client, indices_data_producer, options_data_producer, indices_producer, options_producer
 # from data_producers import MAIN_QUEUE # MP_QUEUE
 from data_producers import MP_QUEUES # MP_QUEUE
 
 # KEYDB DataBase Connection
-redis = direct_redis.DirectRedis(host='localhost', port=6379, db=0)
+# redis = direct_redis.DirectRedis(host='localhost', port=6379, db=0)
 polygon_logger.info("Connection to KeyDB Complete.")
 running = True
 
 options_last_msg_time = datetime.now()
-def process_queue_data(queue_name: str, queue1: mp.Queue):
+# def process_queue_data(queue_name: str, queue1: mp.Queue):
+# def process_queue_data(queue_name: str, queue1: queue.Queue):
+def process_queue_data(queue_name: str):
     global options_last_msg_time
     last_minute = None
+    queue1 = MP_QUEUES[queue_name]
         
     queue_logger.info(f"process_queue_data() started for {queue_name}")
     while running:
@@ -36,13 +41,13 @@ def process_queue_data(queue_name: str, queue1: mp.Queue):
             market_data = queue1.get(timeout=0.01)
             queue_logger.debug(f"Popped index data from queue: {market_data}")
             if isinstance(market_data, IndexValue):
-                last_minute = consume_index_value(market_data, last_minute, queue1.qsize(), redis, queue_name)
+                last_minute = consume_index_value(market_data, last_minute, queue1.qsize(), queue_name)
             elif isinstance(market_data, EquityTrade):
                 options_last_msg_time = datetime.now()
-                consume_options_trade_msg(market_data, last_minute, queue1.qsize(), redis, queue_name) # last_minute = 
+                consume_options_trade_msg(market_data, last_minute, queue1.qsize(), queue_name) # last_minute = 
             elif isinstance(market_data, EquityQuote):
                 options_last_msg_time = datetime.now()
-                consume_options_quote_msg(market_data, last_minute, queue1.qsize(), redis, queue_name)
+                consume_options_quote_msg(market_data, last_minute, queue1.qsize(), queue_name)
             else:
                 queue_logger.warning(f"Unknown Message received: {market_data}")
 
@@ -56,27 +61,38 @@ def process_queue_data(queue_name: str, queue1: mp.Queue):
 
 if __name__ == "__main__":
     
-    # Starting Producer
-    polygon_logger.info("Starting Polygon Producer")
-    index_client = create_index_websocket_client()
-    options_client = create_options_websocket_client()
-    index_producer_process = mp.Process(target=indices_data_producer, args=[index_client])
-    index_producer_process.start()
-    options_producer_process = mp.Process(target=options_data_producer, args=[options_client])
-    options_producer_process.start()
+    # # Starting Producer
+    # polygon_logger.info("Starting Polygon Producer")
+    # index_client = create_index_websocket_client()
+    # options_client = create_options_websocket_client()
+    # index_producer_process = mp.Process(target=indices_data_producer, args=[index_client])
+    # index_producer_process.start()
+    # options_producer_process = mp.Process(target=options_data_producer, args=[options_client])
+    # options_producer_process.start()
 
-    # Starting Consumers
-    consumer_processes: List[mp.Process] = []
-    for queue_name, queue_tmp in OPTIONS_QUEUE_DICT.items():
-    # if True:
-        # queue_name = "main"
-        # queue_1 = MAIN_QUEUE
-        queue_1 = MP_QUEUES[queue_name]
-        # print(f'Inside for : {queues[prefix]}')
-        polygon_logger.info(f"Starting mp.Queue for {queue_name}")
-        process = mp.Process(target=process_queue_data, args=(queue_name, queue_1))
-        consumer_processes.append(process)
-        process.start()
+    # # Starting Consumers
+    # consumer_processes: List[mp.Process] = []
+    # for queue_name, queue_tmp in OPTIONS_QUEUE_DICT.items():
+    # # if True:
+    #     # queue_name = "main"
+    #     # queue_1 = MAIN_QUEUE
+    #     queue_1 = MP_QUEUES[queue_name]
+    #     # print(f'Inside for : {queues[prefix]}')
+    #     polygon_logger.info(f"Starting mp.Queue for {queue_name}")
+    #     process = mp.Process(target=process_queue_data, args=(queue_name, queue_1))
+    #     consumer_processes.append(process)
+    #     process.start()
+
+    polygon_logger.info("Starting Polygon Producer")
+    threading.Thread(target=indices_producer, daemon=True).start()
+    threading.Thread(target=options_producer, daemon=True).start()
+
+    # ---- Consumers via ThreadPool ----
+    pool = ThreadPoolExecutor(max_workers=len(MP_QUEUES))
+
+    for queue_name, queue_obj in MP_QUEUES.items():
+        polygon_logger.info(f"Starting consumer thread for {queue_name}")
+        pool.submit(process_queue_data, queue_name)
 
     while True:
         time.sleep(10)

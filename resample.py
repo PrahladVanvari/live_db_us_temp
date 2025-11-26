@@ -15,7 +15,7 @@ def resample_tick(reference_timestamp, reference_price, symbol, qsize, redis: di
         ltt_min_2 = ltt_min_1 - datetime.timedelta(minutes=1)
 
         # print(f'{queue_name} {qsize} {ltt_min_1} {symbol}:{reference_price}', sep='', end='\r', flush=True)
-        print(f'{queue_name} {qsize} {ltt_min_1} {symbol}:{reference_price}')
+        # print(f'{queue_name} {qsize} {ltt_min_1} {symbol}:{reference_price}')
         resampler_logger.debug(
         f"Received tick for {symbol} at {timestamp}, Queue Size: {qsize}, Tick Value: {reference_price}"
         )
@@ -46,7 +46,7 @@ def resample_tick(reference_timestamp, reference_price, symbol, qsize, redis: di
             "v": 0,
             "oi": 0,
             }
-        resampler_logger.debug(f"Created new candle for {symbol} at {timestamp}: {candle}")
+            resampler_logger.debug(f"Created new candle for {symbol} at {timestamp}: {candle}")
 
         redis.hset(f'l.tick_{str(ltt_min_1)}', symbol, candle)
         redis.hset(f'l.{symbol}', str(ltt_min_1), candle)
@@ -76,9 +76,11 @@ def resample_tick(reference_timestamp, reference_price, symbol, qsize, redis: di
                 redis.lpush('EVENTS', {'timestamp': ltt_min_1, 'bar_complete': False})
         lag_seconds = (system_timestamp - timestamp).total_seconds()
         redis.hset('td_candle_init_lag_timestamp', str(system_timestamp), lag_seconds)
-        resampler_logger.info(
-        f"[{timestamp}] {symbol} Q{queue_name}[{qsize}] Lag: {lag_seconds:.3f} seconds"
-        )
+        
+        end_time = datetime.datetime.now()
+        time_taken_iteration = (end_time - system_timestamp).total_seconds() * 1000 # ms
+        resampler_logger.info(f"[{timestamp}] {symbol} Q{queue_name}[{qsize}] Lag: {lag_seconds:.4f}s, TTD:[{time_taken_iteration:.4f}ms]")
+        # print(f"[{timestamp}] {symbol} Q{queue_name}[{qsize}] Lag: {lag_seconds:.4f}s, TTD:[{time_taken_iteration:.4f}ms]")
 
     except Exception as e:
         resampler_logger.exception(f"Error in resampling tick for {symbol}: {e}")
